@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px;
+  width: 200px;
+  height: 300px;
+  overflow-y: auto;
+}
+
+.column h2 {
+  margin-top: 0;
+}
+
+.containerData {
+  display: flex;
+  justify-content: center; 
+  align-items: center; 
+}
