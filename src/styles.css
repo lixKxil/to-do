@@ -10,10 +10,10 @@
   flex-direction: column;
   align-items: center;
   border: 1px solid #ccc;
-  padding: 10px;
+ 
   margin: 10px;
   width: 200px;
-  height: 300px;
+  height: 400px;
   overflow-y: auto;
 }
 
@@ -25,4 +25,39 @@
   display: flex;
   justify-content: center; 
   align-items: center; 
+}
+
+.nameColumn {
+  background-color: #f2f3f5;
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+button {
+  width: 180px;
+  height: 30px;
+  background-color: white;
+  border: 2px solid #efefef;
+  cursor: pointer;
+  margin-bottom: 5px;
+  box-shadow: 2px 2px 4px rgba(196, 194, 194, 0.2);
+}
+
+button:hover {
+  background-color: #f8f9fb;
+}
+
+.columnDepartment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #ccc;
+ 
+  margin: 10px;
+  width: 400px;
+  height: auto;
+  overflow-y: auto;
 }

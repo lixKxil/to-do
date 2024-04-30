@@ -20,8 +20,8 @@ function App() {
   const [mainTodos, setMainTodos] = useState(todoList);
   const [fruitTodos, setFruitTodos] = useState([]);
   const [vegetableTodos, setVegetableTodos] = useState([]);
-  const [userData, setUserData] = useState([]);
   const [createData, setCreateData] = useState([]);
+  const [isShowButton, setIsShowButton] = useState(true);
 
   const handleItemClick = (todo) => {
     setMainTodos((prevTodos) =>
@@ -31,7 +31,15 @@ function App() {
     if (todo.type === 'Fruit') {
       setFruitTodos((prevTodos) => [...prevTodos, todo]);
       setTimeout(() => {
-        setMainTodos((prevMainTodos) => [todo, ...prevMainTodos]);
+        setMainTodos((prevMainTodos) => {
+          if (!prevMainTodos.some((item) => item.name === todo.name)) {
+            const newMainTodos = [...prevMainTodos];
+            newMainTodos.push(todo);
+            return newMainTodos;
+          } else {
+            return prevMainTodos;
+          }
+        });
         setFruitTodos((prevFruitTodos) =>
           prevFruitTodos.filter((item) => item.id !== todo.id)
         );
@@ -39,7 +47,15 @@ function App() {
     } else if (todo.type === 'Vegetable') {
       setVegetableTodos((prevTodos) => [...prevTodos, todo]);
       setTimeout(() => {
-        setMainTodos((prevMainTodos) => [todo, ...prevMainTodos]);
+        setMainTodos((prevMainTodos) => {
+          if (!prevMainTodos.some((item) => item.name === todo.name)) {
+            const newMainTodos = [...prevMainTodos];
+            newMainTodos.push(todo);
+            return newMainTodos;
+          } else {
+            return prevMainTodos;
+          }
+        });
         setVegetableTodos((prevVegetableTodos) =>
           prevVegetableTodos.filter((item) => item.id !== todo.id)
         );
@@ -47,74 +63,102 @@ function App() {
     }
   };
 
+  const handleItemTypeClick = (todo) => {
+    setMainTodos((prevTodos) =>
+      prevTodos.filter((item) => item.id !== todo.id)
+    );
+
+    if (todo.type === 'Fruit') {
+      setFruitTodos((prevTodos) => [...prevTodos, todo]);
+      setMainTodos((prevMainTodos) => prevMainTodos.concat(todo));
+      setFruitTodos((prevFruitTodos) =>
+        prevFruitTodos.filter((item) => item.id !== todo.id)
+      );
+    } else if (todo.type === 'Vegetable') {
+      setVegetableTodos((prevTodos) => [...prevTodos, todo]);
+      setMainTodos((prevMainTodos) => prevMainTodos.concat(todo));
+      setVegetableTodos((prevVegetableTodos) =>
+        prevVegetableTodos.filter((item) => item.id !== todo.id)
+      );
+    }
+  };
+
   const fetchData = async () => {
     try {
       const response = await axios.get('https://dummyjson.com/users');
       const { data } = response;
-      setUserData(data.users);
-      transformData();
+      transformData(data.users);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const transformData = () => {
-    console.log(userData);
-    const transformedData = userData.reduce((result, user) => {
-      const department = user.department;
+  const transformData = (data) => {
+    const departmentData = {};
 
-      if (!result[department]) {
-        result[department] = {
+    data.forEach((person) => {
+      const { company, gender, hair, firstName, lastName, address } = person;
+      const { department } = company;
+
+      if (!departmentData[department]) {
+        departmentData[department] = {
           male: 0,
           female: 0,
-          totalAge: 0,
-          count: 0,
           hair: {},
           addressUser: {},
         };
       }
 
-      user.gender === 'male'
-        ? result[department].male++
-        : result[department].female++;
-
-      result[department].totalAge += user.age;
-
-      result[department].count++;
-
-      const hairColor = user.hair.color;
-      if (!result[department].hair[hairColor]) {
-        result[department].hair[hairColor] = 0;
+      if (gender === 'male') {
+        departmentData[department].male++;
+      } else {
+        departmentData[department].female++;
       }
-      result[department].hair[hairColor]++;
 
-      const userName = `${user.firstName}${user.lastName}`;
-      const postalCode = user.address.postalCode;
-      result[department].addressUser[userName] = postalCode;
-
-      return result;
-    }, {});
-
-    for (const department in transformedData) {
-      const departmentData = transformedData[department];
-      if (departmentData.count > 0) {
-        departmentData.ageRange = `${Math.round(
-          departmentData.totalAge / departmentData.count
-        )}-${Math.round(
-          (departmentData.totalAge + departmentData.count - 1) /
-            departmentData.count
-        )}`;
+      const hairColor = hair.color;
+      if (!departmentData[department].hair[hairColor]) {
+        departmentData[department].hair[hairColor] = 0;
       }
+      departmentData[department].hair[hairColor]++;
+
+      const addressKey = `${firstName}${lastName}`;
+      departmentData[department].addressUser[addressKey] = address.postalCode;
+    });
+
+    const departmentStats = {};
+
+    for (const department in departmentData) {
+      const { male, female } = departmentData[department];
+
+      const minAge = Math.min(
+        ...data
+          .filter((person) => person.company.department === department)
+          .map((person) => person.age)
+      );
+      const maxAge = Math.max(
+        ...data
+          .filter((person) => person.company.department === department)
+          .map((person) => person.age)
+      );
+      const ageRange = minAge === maxAge ? `${maxAge}` : `${minAge}-${maxAge}`;
+
+      departmentStats[department] = {
+        male,
+        female,
+        hair: departmentData[department].hair,
+        addressUser: departmentData[department].addressUser,
+        ageRange: ageRange,
+      };
     }
-    console.log('Transformed Data:', transformedData);
-    setCreateData(transformedData);
+    setCreateData(departmentStats);
+    setIsShowButton(false);
+    console.log(departmentStats);
   };
 
   return (
     <>
       <div className='container'>
         <div className='column'>
-          <h2>Main</h2>
           {mainTodos.map((todo, index) => (
             <button key={todo.id} onClick={() => handleItemClick(todo)}>
               {todo.name}
@@ -122,27 +166,38 @@ function App() {
           ))}
         </div>
         <div className='column'>
-          <h2>Fruit</h2>
+          <div className='nameColumn'>
+            <h5>Fruit</h5>
+          </div>
           {fruitTodos.map((todo) => (
-            <button key={todo.id}>{todo.name}</button>
+            <button key={todo.id} onClick={() => handleItemTypeClick(todo)}>
+              {todo.name}
+            </button>
           ))}
         </div>
         <div className='column'>
-          <h2>Vegetable</h2>
+          <div className='nameColumn'>
+            <h5>Vegetable</h5>
+          </div>
           {vegetableTodos.map((todo) => (
-            <button key={todo.id}>{todo.name}</button>
+            <button key={todo.id} onClick={() => handleItemTypeClick(todo)}>
+              {todo.name}
+            </button>
           ))}
         </div>
       </div>
       <div className='containerData'>
         <div>
           <div>
-            <button onClick={() => fetchData()}>CreateData</button>
+            {isShowButton && (
+              <button onClick={() => fetchData()}>CreateData</button>
+            )}
           </div>
           {Object.keys(createData).length > 0 && (
-            <div className='transformed-data'>
+            <div>
               {Object.keys(createData).map((department) => (
-                <div key={department}>
+                <div className='columnDepartment' key={department}>
+                  <p>{department}</p>
                   <p>Male: {createData[department].male}</p>
                   <p>Female: {createData[department].female}</p>
                   <p>Age Range: {createData[department].ageRange}</p>
@@ -159,7 +214,7 @@ function App() {
                     {Object.keys(createData[department].addressUser).map(
                       (userName) => (
                         <li key={userName}>
-                          {userName}:{' '}
+                          {userName}:
                           {createData[department].addressUser[userName]}
                         </li>
                       )
