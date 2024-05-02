@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './styles.css';
 import axios from 'axios';
 
@@ -22,48 +22,51 @@ function App() {
   const [vegetableTodos, setVegetableTodos] = useState([]);
   const [createData, setCreateData] = useState([]);
   const [isShowButton, setIsShowButton] = useState(true);
+  const timeoutRefs = useRef({});
 
   const handleItemClick = (todo) => {
+    if (timeoutRefs.current[todo.id]) {
+      clearTimeout(timeoutRefs.current[todo.id]);
+    }
+
     setMainTodos((prevTodos) =>
       prevTodos.filter((item) => item.id !== todo.id)
     );
 
-    if (todo.type === 'Fruit') {
-      setFruitTodos((prevTodos) => [...prevTodos, todo]);
-      setTimeout(() => {
-        setMainTodos((prevMainTodos) => {
-          if (!prevMainTodos.some((item) => item.name === todo.name)) {
-            const newMainTodos = [...prevMainTodos];
-            newMainTodos.push(todo);
-            return newMainTodos;
-          } else {
-            return prevMainTodos;
-          }
-        });
+    const addToTodoListLater = () => {
+      setMainTodos((prevMainTodos) => {
+        const exists = prevMainTodos.some((item) => item.name === todo.name);
+        if (!exists) {
+          return [...prevMainTodos, todo];
+        }
+        return prevMainTodos;
+      });
+
+      if (todo.type === 'Fruit') {
         setFruitTodos((prevFruitTodos) =>
           prevFruitTodos.filter((item) => item.id !== todo.id)
         );
-      }, 5000);
-    } else if (todo.type === 'Vegetable') {
-      setVegetableTodos((prevTodos) => [...prevTodos, todo]);
-      setTimeout(() => {
-        setMainTodos((prevMainTodos) => {
-          if (!prevMainTodos.some((item) => item.name === todo.name)) {
-            const newMainTodos = [...prevMainTodos];
-            newMainTodos.push(todo);
-            return newMainTodos;
-          } else {
-            return prevMainTodos;
-          }
-        });
+      } else if (todo.type === 'Vegetable') {
         setVegetableTodos((prevVegetableTodos) =>
           prevVegetableTodos.filter((item) => item.id !== todo.id)
         );
-      }, 5000);
+      }
+    };
+
+    if (todo.type === 'Fruit') {
+      setFruitTodos((prevTodos) => [...prevTodos, todo]);
+    } else if (todo.type === 'Vegetable') {
+      setVegetableTodos((prevTodos) => [...prevTodos, todo]);
     }
+
+    timeoutRefs.current[todo.id] = setTimeout(addToTodoListLater, 5000);
   };
 
   const handleItemTypeClick = (todo) => {
+    if (timeoutRefs.current[todo.id]) {
+      clearTimeout(timeoutRefs.current[todo.id]);
+    }
+
     setMainTodos((prevTodos) =>
       prevTodos.filter((item) => item.id !== todo.id)
     );
